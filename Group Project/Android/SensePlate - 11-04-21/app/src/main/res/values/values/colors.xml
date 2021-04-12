@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#121212</color>
+    <color name="colorPrimaryDark">#040404</color>
+    <color name="colorAccent">#CD2030</color>
+    <color name="textColor">#FFFFFF</color>
+
+
+    <color name="color_one">#fb7268</color>
+    <color name="color_white">#ededf2</color>
+    <color name="color_two">#E3E0E0</color>
+
+    <color name="protein">#66BB6A</color>
+    <color name="fat">#EF5350</color>
+    <color name="carbs">#29B6F6</color>
+</resources>

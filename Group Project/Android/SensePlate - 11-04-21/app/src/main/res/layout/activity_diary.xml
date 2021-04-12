@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".DiaryActivity"
+    android:background="@color/colorPrimaryDark">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="@dimen/main_card_top_padding"
+        android:elevation="10dp"
+        app:cardCornerRadius="@dimen/main_card_corners"
+        app:cardBackgroundColor="@color/colorPrimary">
+
+        <RelativeLayout
+            android:id="@+id/rvDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp">
+
+            <ImageButton
+                android:id="@+id/buttonPrevious"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_arrow_back_ios_24"
+                android:layout_alignParentLeft="true"
+                android:paddingLeft="40dp"
+                android:background="@null"
+                android:clickable="true"
+                />
+
+            <TextView
+                android:id="@+id/tvDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textColor="@color/textColor"
+                android:layout_centerInParent="true"
+                />
+
+            <ImageButton
+                android:id="@+id/buttonNext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_arrow_forward_ios_24"
+                android:layout_alignParentRight="true"
+                android:paddingRight="40dp"
+                android:background="@null"
+                android:clickable="true"
+            />
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/cardView">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewCalories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="@dimen/main_card_top_padding"
+                android:elevation="10dp"
+                app:cardCornerRadius="@dimen/main_card_corners"
+                app:cardBackgroundColor="@color/colorPrimary">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:id="@+id/tvCaloriesText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20dp"
+                        android:text="Daily Calorie Intake"
+                        android:textColor="@color/textColor"
+                        android:paddingLeft="20dp"
+                        />
+
+                    <TextView
+                        android:id="@+id/tvCalories"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:layout_alignParentRight="true"
+                        android:paddingRight="25dp"
+                        />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewBreakfast"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="@dimen/main_card_top_padding"
+                android:elevation="10dp"
+                app:cardCornerRadius="@dimen/main_card_corners"
+                app:cardBackgroundColor="@color/colorPrimary"
+                android:layout_below="@+id/cardViewCalories">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:id="@+id/tvBreakfast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Breakfast"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:paddingTop="@dimen/main_padding"
+                        android:paddingLeft="20dp"
+                        />
+
+                    <TextView
+                        android:id="@+id/tvBreakfastCalories"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:layout_alignParentRight="true"
+                        android:paddingTop="@dimen/main_padding"
+                        android:paddingRight="25dp"
+                        />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/breakfastRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/colorPrimary"
+                        android:layout_below="@id/tvBreakfast"
+                        android:paddingTop="10dp"
+                        />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewLunch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="@dimen/main_card_top_padding"
+                android:elevation="10dp"
+                app:cardCornerRadius="@dimen/main_card_corners"
+                app:cardBackgroundColor="@color/colorPrimary"
+                android:layout_below="@+id/cardViewBreakfast">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:id="@+id/tvLunch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lunch"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:paddingTop="@dimen/main_padding"
+                        android:paddingLeft="20dp"
+                        />
+
+                    <TextView
+                        android:id="@+id/tvLunchCalories"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:layout_alignParentRight="true"
+                        android:paddingTop="@dimen/main_padding"
+                        android:paddingRight="25dp"
+                        />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/lunchRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/colorPrimary"
+                        android:layout_below="@id/tvLunch"
+                        android:paddingTop="10dp"
+                        />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewDinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="@dimen/main_card_top_padding"
+                android:elevation="10dp"
+                app:cardCornerRadius="@dimen/main_card_corners"
+                app:cardBackgroundColor="@color/colorPrimary"
+                android:layout_below="@+id/cardViewLunch">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:id="@+id/tvDinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Dinner"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:paddingTop="@dimen/main_padding"
+                        android:paddingLeft="20dp"
+                        />
+
+                    <TextView
+                        android:id="@+id/tvDinnerCalories"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:layout_alignParentRight="true"
+                        android:paddingTop="@dimen/main_padding"
+                        android:paddingRight="25dp"
+                        />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/dinnerRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/colorPrimary"
+                        android:layout_below="@id/tvDinner"
+                        android:paddingTop="10dp"
+                        />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewSnacks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="@dimen/main_card_top_padding"
+                android:elevation="10dp"
+                app:cardCornerRadius="@dimen/main_card_corners"
+                app:cardBackgroundColor="@color/colorPrimary"
+                android:layout_below="@+id/cardViewDinner">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:id="@+id/tvSnacks"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Snacks"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:paddingTop="@dimen/main_padding"
+                        android:paddingLeft="20dp"
+                        />
+
+                    <TextView
+                        android:id="@+id/tvSnacksCalories"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20dp"
+                        android:textColor="@color/textColor"
+                        android:layout_alignParentRight="true"
+                        android:paddingTop="@dimen/main_padding"
+                        android:paddingRight="25dp"
+                        />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/snacksRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/colorPrimary"
+                        android:layout_below="@id/tvSnacks"
+                        android:paddingTop="10dp"
+                        />
+              </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+        </RelativeLayout>
+    </ScrollView>
+
+
+    <include
+        android:id="@+id/navigation"
+        layout="@layout/user_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        />
+</RelativeLayout>

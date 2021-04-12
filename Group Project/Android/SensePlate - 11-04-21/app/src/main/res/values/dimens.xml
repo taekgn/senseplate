@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="main_padding">20dp</dimen>
+    <dimen name="main_card_top_padding">5dp</dimen>
+    <dimen name="main_card_corners">5dp</dimen>
+</resources>

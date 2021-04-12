@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".DiaryActivity"
+    android:background="@color/colorPrimaryDark">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardViewProfile"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="@dimen/main_card_top_padding"
+            android:layout_marginBottom="@dimen/main_card_top_padding"
+            android:elevation="10dp"
+            app:cardCornerRadius="@dimen/main_card_corners"
+            app:cardBackgroundColor="@color/colorPrimary">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/tvProfile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Profile"
+                    android:textSize="20dp"
+                    android:textColor="@color/textColor"
+                    android:paddingTop="@dimen/main_padding"
+                    android:paddingLeft="20dp"
+                    />
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cvProfilePic"
+                    android:layout_width="155dp"
+                    android:layout_height="155dp"
+                    app:cardCornerRadius="250dp"
+                    app:cardBackgroundColor="@color/textColor"
+                    android:layout_centerHorizontal="true"
+                    android:layout_below="@id/tvProfile">
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="150dp"
+                        android:layout_height="150dp"
+                        app:cardCornerRadius="250dp"
+                        android:layout_gravity="center">
+
+                        <ImageView
+                            android:id="@+id/ivProfilePic"
+                            android:layout_width="150dp"
+                            android:layout_height="150dp"
+                            android:src="@drawable/default_person"
+                            android:scaleType="centerCrop"/>
+                    </androidx.cardview.widget.CardView>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/profileRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimary"
+                    android:layout_below="@id/cvProfilePic"
+                    android:paddingTop="10dp"
+                    />
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
+
+        <include
+            android:id="@+id/navigation"
+            layout="@layout/user_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            />
+    </RelativeLayout>
+
+
+</RelativeLayout>

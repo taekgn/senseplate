@@ -1,0 +1,25 @@
+<menu
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+tools:context=".DiaryActivity">
+
+    <item
+        android:id="@+id/menu_profile"
+        android:orderInCategory="100"
+        android:title="Profile"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/menu_bargraph"
+        android:orderInCategory="100"
+        android:title="Bar Graph"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/menu_linegraph"
+        android:orderInCategory="100"
+        android:title="Line Graph"
+        app:showAsAction="never"/>
+
+</menu>
