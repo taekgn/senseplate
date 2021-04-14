@@ -1,4 +1,4 @@
-package com.james.senseplate;
+package kent.group8.senseplateandroid;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -9,27 +9,40 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.text.Editable;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
-import com.github.mikephil.charting.animation.Easing;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.PercentFormatter;
-import com.github.mikephil.charting.utils.MPPointF;
+import org.eazegraph.lib.charts.PieChart;
+import org.eazegraph.lib.models.PieModel;
 
+//////////////////////////////////
+import android.os.PowerManager;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+import java.io.IOException;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.os.Message;
+import android.app.NotificationManager;
+import android.util.Log;
+import android.widget.Toast;
+
+///////////////////////////////////
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,21 +51,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+//////////////////////////////////
 
 public class FoodActivity extends AppCompatActivity {
-    private String foodID, foodItem;
-    private TextView tvWeight, tvFood, tvCalories, tvGoals, tvTemp, tvMoisture;
-    private float weight, calories, protein, fat, carbs, temp, moisture;
-
+    private String foodID, foodItem, amount, calories, protein, fat, carbs;
+    private float weight, carbsF, fatF, proteinF, energy;
+    private TextView tvFood, tvCalories, tvGoals, tvCarbs, tvFat, tvProtein;
+    private PieChart pieChart;
+ //   private ProgressBar progressBar;
+    private CardView cardView;
     private Button addButton;
     private DatabaseSQLite myDB;
-
-    private com.github.mikephil.charting.charts.PieChart chart;
-    private Typeface tfRegular;
-    private Typeface tfLight;
-
     private String rxdatum;
 
+    float mass, mio, cole, organ, energyF;
+    int energyI;
     Signalton signal = Signalton.getInstance();
 
     ///////////////////////////////////////////////
@@ -71,6 +84,9 @@ public class FoodActivity extends AppCompatActivity {
     final static UUID BT_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private boolean state = false;
     private boolean second = true;
+    private TextView tvMoi;
+    private TextView tvTemp;
+    private Button refresh;
     //////////////////////////////////////////////
 
     @SuppressLint("HandlerLeak")
@@ -80,29 +96,39 @@ public class FoodActivity extends AppCompatActivity {
         setContentView(R.layout.foodactivity_main);
 
         myDB = new DatabaseSQLite(this);
-
-        tvWeight = (TextView) findViewById(R.id.textViewWeight);
         tvFood = (TextView) findViewById(R.id.textViewFood);
         tvCalories = (TextView) findViewById(R.id.textViewCalories);
         tvGoals = (TextView) findViewById(R.id.textViewGoal);
-        tvTemp = (TextView) findViewById(R.id.textViewTemp);
-        tvMoisture = (TextView) findViewById(R.id.textViewMoist);
+        cardView = (CardView) findViewById(R.id.cardView);
+        cardView.setVisibility(View.GONE);
+    //    progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        pieChart = (PieChart) findViewById(R.id.piechart);
+        tvCarbs = (TextView) findViewById(R.id.tvCarbs);
+        tvFat = (TextView) findViewById(R.id.tvFat);
+        tvProtein = (TextView) findViewById(R.id.tvProtein);
         addButton = (Button) findViewById(R.id.addButton);
 
-        //button to add the food item to the user's diary
-        addButton.setOnClickListener(new View.OnClickListener() {
+        //retrieve strings from SearchAdapter
+        Intent intent = getIntent();
+        foodID = intent.getExtras().getString("foodID");
+        foodItem = intent.getExtras().getString("foodItem");
+        amount = intent.getExtras().getString("amount");
+        calories = intent.getExtras().getString("calories");
+        protein = intent.getExtras().getString("protein");
+        fat = intent.getExtras().getString("fat");
+        carbs = intent.getExtras().getString("carbs");
+
+        tvTemp = findViewById(R.id.tvTemp);
+        tvMoi = findViewById(R.id.tvMoi);
+        refresh = findViewById(R.id.refresh);
+        refresh.setOnClickListener(new View.OnClickListener() {
+            @Override
             public void onClick(View v) {
-                StoreInfo store = new StoreInfo();
-                String mealType = store.getMealType();
-                String date = store.getDate();
-                String time = store.getTime();
-                myDB.insertFoodDiary(foodID, foodItem, String.format("%.0f", calories), carbs, protein, fat, temp, moisture, mealType, date, time);
-                Intent i = new Intent(getApplicationContext(), DiaryActivity.class);
-                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(i);
+                signal.addWeight(rxdatum.substring(0,4));
+                createTextView();
+                createPieChart(signal.getWeight());
             }
         });
-
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mBluetoothHandler = new Handler(){
             public void handleMessage(android.os.Message msg){
@@ -110,11 +136,7 @@ public class FoodActivity extends AppCompatActivity {
                     rxdatum = null;
                     try {
                         rxdatum = new String((byte[]) msg.obj, "UTF-8");
-                        if(Float.valueOf(rxdatum.replaceAll("\n.*", "")) < 3) {
-                            signal.addWeight("0");
-                        } else {
-                            signal.addWeight(rxdatum.replaceAll("\n.*", ""));
-                        }
+                        signal.addWeight(rxdatum.substring(0,4));
                         state = true;//first switch on, now both switches are enabled
                         makeplot();//This is special function for BLT communication to prevent collision
                     } catch (UnsupportedEncodingException e) {
@@ -127,35 +149,140 @@ public class FoodActivity extends AppCompatActivity {
         popup();
         //Shows alertdialog regards to blt
 
+
+
+        //set textviews for name, calories and goal
+        tvFood.setText(foodItem);
+        //tvCalories.setText(calories.substring(0, calories.indexOf(".")) + " cal");
+        //will be used to show daily goal once set up
+
+        Cursor cursor = myDB.getCalorieTarget();
+        if (cursor.moveToFirst()) {
+            do {
+                Double caloriesTarget = cursor.getDouble(0);
+                Double caloriesPerc = (Double.valueOf(calories) / caloriesTarget) * 100;
+                tvGoals.setText(String.format("%.2f", caloriesPerc) + "% of daily goal");
+            } while (cursor.moveToNext());
+        }
+
+
+        //button to add the food item to the user's diary
+        addButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                StoreInfo store = new StoreInfo();
+                String mealType = store.getMealType();
+                String date = store.getDate();
+                String time = store.getTime();
+                myDB.insertFoodDiary(foodID, foodItem, calories, carbsF, proteinF, fatF, mealType, date, time);
+                Intent i = new Intent(getApplicationContext(), DiaryActivity.class);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+            }
+        });
+
+        //will be used to show loading of weighing food
+  //      progressBar.setProgress(75);
+
     }
 
     public void makeplot(){
         if(state == true && second == true){
             second = false;//second switch is disabled to prevent repeatition and collision
-            setData(signal.getWeight());
+            createPieChart(signal.getWeight());
+            createTextView();
+        }
+        else{
+
         }
     }
 
     public void popup(){
-        AlertDialog builder = new AlertDialog.Builder(FoodActivity.this)
+        AlertDialog builder = new AlertDialog.Builder(FoodActivity.this) 
                 .setMessage("Default mode or Bluetooth mode?")
                 .setPositiveButton("Pair", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which){
-                        Toast.makeText(getApplicationContext(), "PAIRING Selected", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "PAIRING Selected", Toast.LENGTH_SHORT).show(); 
                         listPairedDevices();
                         //createTextView();
                         //createPieChart();
 
                     }
                 })
-                .setNegativeButton("Default", new DialogInterface.OnClickListener() {
+                .setNegativeButton("Default", new DialogInterface.OnClickListener() {   
                     public void onClick(DialogInterface dialog, int which){
                         Toast.makeText(getApplicationContext(), "DEFAULT Selected", Toast.LENGTH_SHORT).show();
-                        signal.addWeight("200");
-                        setData(signal.getWeight());
+                        signal.addWeight("100");
+                        createPieChart(signal.getWeight());
+                        createTextView();
+
                     }
                 })
                 .show();
+    }
+
+    public void createTextView(){
+        TextView tvWeight = findViewById(R.id.textViewWeight);
+        tvWeight.setText(signal.getWeight());
+
+
+        mass = Float.parseFloat(signal.getWeight()) / 100;
+        mio = Float.parseFloat(protein) * mass;//protein
+        cole = Float.parseFloat(fat) * mass;//fat
+        organ = Float.parseFloat(carbs) * mass;//carbs
+        energyF = Float.parseFloat(calories) * mass;
+        energyI = Math.round(energyF);//calorie
+
+        tvCalories.setText(energyI + " cal");
+        tvCarbs.setText("Carbs " + organ + "g");
+        tvFat.setText("Fat " + cole + "g");
+        tvProtein.setText("Protein " + mio + "g");
+        tvMoi.setText(signal.getMoi());
+        tvTemp.setText(signal.getTemp());
+
+        tvTemp.setVisibility(View.VISIBLE);
+        tvMoi.setVisibility(View.VISIBLE);
+    }
+
+    //to create pie chart showing nutrition percentages
+    public void createPieChart(String sign)
+    {
+        cardView.setVisibility(View.VISIBLE);
+
+        weight = Float.parseFloat(sign);
+        weight /= 100;
+        carbsF = Float.parseFloat(carbs);
+        fatF = Float.parseFloat(fat);
+        proteinF = Float.parseFloat(protein);
+        energy = Float.parseFloat(calories);
+
+        carbsF *= weight;
+        fatF *= weight;
+        proteinF *= weight;
+        energy *= weight;
+
+
+        //set key
+        //tvCarbs.setText("Carbs " + carbs + "g");
+        //tvFat.setText("Fat " + fat + "g");
+        //tvProtein.setText("Protein " + protein + "g");
+   //     pieChart.setInnerPaddingColor(Color.parseColor("#121212"));
+        pieChart.clearChart();
+        // Set the data and color to the pie chart
+        pieChart.addPieSlice(
+                new PieModel(
+                        carbsF,
+                        Color.parseColor("#29B6F6")));
+        pieChart.addPieSlice(
+                new PieModel(
+                        fatF,
+                        Color.parseColor("#EF5350")));
+        pieChart.addPieSlice(
+                new PieModel(
+                        proteinF,
+                        Color.parseColor("#66BB6A")));
+
+        // To animate the pie chart
+        pieChart.startAnimation();
     }
 
 
@@ -166,7 +293,7 @@ public class FoodActivity extends AppCompatActivity {
         else {
             if (mBluetoothAdapter.isEnabled()) {
                 Toast.makeText(getApplicationContext(), "Already actiavted.", Toast.LENGTH_LONG).show();
-                //mTvBluetoothStatus.setText("활성화");
+                //mTvBluetoothStatus.setText("Activate");
             }
             else {
                 Toast.makeText(getApplicationContext(), "Bluetooth is not activated.", Toast.LENGTH_LONG).show();
@@ -179,7 +306,7 @@ public class FoodActivity extends AppCompatActivity {
         if (mBluetoothAdapter.isEnabled()) {
             mBluetoothAdapter.disable();
             Toast.makeText(getApplicationContext(), "Bluetooth deactivated.", Toast.LENGTH_SHORT).show();
-            //mTvBluetoothStatus.setText("비활성화");
+            //mTvBluetoothStatus.setText("Deactivate");
         }
         else {
             Toast.makeText(getApplicationContext(), "Already deactivated.", Toast.LENGTH_SHORT).show();
@@ -248,6 +375,25 @@ public class FoodActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "Error while connecting Bluetooth.", Toast.LENGTH_LONG).show();
         }
     }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_search, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        //opens search activity when search button pressed
+        if (id == R.id.menu_search) {
+            Intent i = new Intent(getApplicationContext(), SearchActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
 
     public class ConnectedBluetoothThread extends Thread {
         private final BluetoothSocket mmSocket;
@@ -278,15 +424,11 @@ public class FoodActivity extends AppCompatActivity {
                     bytes = mmInStream.available();
                     if (bytes != 0) {
                         SystemClock.sleep(100);
-                        try {
-                            bytes = mmInStream.available();
-                            bytes = mmInStream.read(buffer, 0, bytes);
-                            mBluetoothHandler.obtainMessage(BT_MESSAGE_READ, bytes, -1, buffer).sendToTarget();}
-                        catch (NullPointerException e) {
-
-                        } catch (ArrayIndexOutOfBoundsException e) {
-
-                        }
+                        try{
+                        bytes = mmInStream.available();
+                        bytes = mmInStream.read(buffer, 0, bytes);
+                        mBluetoothHandler.obtainMessage(BT_MESSAGE_READ, bytes, -1, buffer).sendToTarget();}
+                        catch (NullPointerException e){}
                     }
                 } catch (IOException ne) {
                     break;
@@ -298,144 +440,8 @@ public class FoodActivity extends AppCompatActivity {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                Toast.makeText(getApplicationContext(), "Error while ejecting socket.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Erro while ejecting socket.", Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-
-
-    private void setData(String realWeight) {
-
-        weight = Float.valueOf(realWeight);
-        tvWeight.setText(String.format("%.0f", weight));
-
-        temp = 160f;
-        tvTemp.setText("N/A °C");
-
-        moisture = 62f;
-        tvMoisture.setText("N/A %");
-
-        //retrieve strings from SearchAdapter
-        Intent intent = getIntent();
-        foodID = intent.getExtras().getString("foodID");
-        foodItem = intent.getExtras().getString("foodItem");
-        //the api sends the data at 100g. Makes the values to 1g to then mulitply by the weight
-        calories = (Float.valueOf(intent.getExtras().getString("calories"))/100) * weight;
-        protein = (Float.valueOf(intent.getExtras().getString("protein"))/100) * weight;
-        fat = (Float.valueOf(intent.getExtras().getString("fat"))/100) * weight;
-        carbs = (Float.valueOf(intent.getExtras().getString("carbs"))/100) * weight;
-
-
-        tfRegular = Typeface.createFromAsset(getAssets(), "OpenSans-Regular.ttf");
-        tfLight = Typeface.createFromAsset(getAssets(), "OpenSans-Light.ttf");
-
-        chart = findViewById(R.id.chart1);
-        chart.setUsePercentValues(true);
-        chart.getDescription().setEnabled(false);
-        chart.setExtraOffsets(5, 10, 5, 5);
-
-        chart.setDragDecelerationFrictionCoef(0.95f);
-
-        chart.setCenterTextTypeface(tfLight);
-        chart.setCenterText("Macros\n%");
-
-        chart.setDrawHoleEnabled(true);
-        chart.setHoleColor(Color.WHITE);
-
-        chart.setTransparentCircleColor(Color.WHITE);
-        chart.setTransparentCircleAlpha(110);
-
-        chart.setHoleRadius(55f);
-        chart.setTransparentCircleRadius(58f);
-
-        chart.setDrawCenterText(true);
-
-        // enable rotation of the chart by touch
-        chart.setRotationEnabled(false);
-        chart.setHighlightPerTapEnabled(false);
-
-        chart.animateY(1400, Easing.EaseInOutQuad);
-        // chart.spin(2000, 0, 360);
-
-
-
-        // entry label styling
-        chart.setEntryLabelColor(Color.WHITE);
-        chart.setEntryLabelTypeface(tfRegular);
-        chart.setEntryLabelTextSize(12f);
-        chart.setDrawEntryLabels(!chart.isDrawEntryLabelsEnabled());
-        //set legend colour white
-        chart.getLegend().setTextColor(Color.WHITE);
-
-        tvFood.setText(foodItem);
-        tvCalories.setText(String.format("%.0f", calories) + " cal");
-
-        Cursor cursor = myDB.getCalorieTarget();
-        if (cursor.moveToFirst()) {
-            do {
-                Double caloriesTarget = cursor.getDouble(0);
-                Double caloriesPer = (Double.valueOf(calories) / caloriesTarget) * 100;
-                tvGoals.setText(String.format("%.2f", caloriesPer) + "% of daily goal");
-            } while (cursor.moveToNext());
-        }
-
-        ArrayList<PieEntry> entries = new ArrayList<>();
-
-        //adding values to pie chart
-        entries.add(new PieEntry(carbs, "Carbs " + String.format("%.2f", carbs) + "g"));
-        entries.add(new PieEntry(fat, "Fat " + String.format("%.2f", fat) + "g"));
-        entries.add(new PieEntry(protein, "Protein " + String.format("%.2f", protein) + "g"));
-
-        PieDataSet dataSet = new PieDataSet(entries, "");
-
-        dataSet.setSliceSpace(3f);
-        dataSet.setIconsOffset(new MPPointF(0, 40));
-        dataSet.setSelectionShift(5f);
-
-        //adding colours, has to be same order as values
-        ArrayList<Integer> colors = new ArrayList<>();
-        colors.add(getResources().getColor(R.color.carbs));
-        colors.add(getResources().getColor(R.color.fat));
-        colors.add(getResources().getColor(R.color.protein));
-
-        dataSet.setColors(colors);
-        //dataSet.setSelectionShift(0f);
-
-        PieData data = new PieData(dataSet);
-        data.setValueFormatter(new PercentFormatter());
-        data.setValueTextSize(11f);
-        data.setValueTextColor(Color.WHITE);
-        data.setValueTypeface(tfLight);
-        chart.setData(data);
-
-        // undo all highlights
-        chart.highlightValues(null);
-
-        chart.invalidate();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_foodactivity, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        //opens search activity when search button pressed
-        if (id == R.id.menu_search) {
-            Intent i = new Intent(getApplicationContext(), SearchActivity.class);
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(i);
-            return true;
-        }
-        if (id == R.id.menu_refresh) {
-            signal.addWeight(rxdatum.replaceAll("\n.*", ""));
-            setData(signal.getWeight());
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 }
