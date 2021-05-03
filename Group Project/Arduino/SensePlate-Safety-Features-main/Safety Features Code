@@ -1,0 +1,261 @@
+//Libraries
+#include <DHT.h>
+
+#define DHTPIN 8     // what pin DHT sensor is connected to
+#define DHTTYPE DHT11   // DHT 11  (AM2302)
+
+DHT dht(DHTPIN, DHTTYPE);
+
+//Food temperature States
+const int FTNormal = 1;
+const int FTHot    = 2;
+const int FTWarm   = 3;
+const int FTCold   = 4;
+
+//Food Temperature Thresholds
+const int FTNormalThreshold = 10;  //FT between 10 and 20 is normal
+const int FTHotThreshold    = 30;  //FT > 30 is too hot
+const int FTWarmThreshold   = 20;  //FT  between 20 and 30 is Warm
+
+//Food Moisture States
+const int FMNormal = 1;
+const int FMDry = 2;  //burnt, hard
+const int FMWet = 3;  //spoilt, rotten
+
+//Temperature Difference Thresholds
+const int TDHighThresold = 2;  // Food temp > outside temp + 10 is too hot 
+const int TDWarmThresold = 0;   // Food Temp between 10 an 5 higher than outside temp is warm
+const int TDNormalThresold = -5;  // Food temp upto 5 higher than outside temperature and down to 5 lower than outside temp is normal. 
+                                  //Fodd temp lower than 5 to the outside temp is cold
+//Tempearature difference states(food temperature - outside temp) States
+const int TDNormal = 1;   // plus or minus 5
+const int TDHigh = 2;     // FT > OT + 5
+const int TDTooHigh = 3;  //FT > OT +10
+const int TDLow = 4;      // FT < OT -5
+
+
+const int moistureSensePin=A1; // Connect sensor at analog pin A1 moisture
+int temperatureSensePin = A0;  //This is the Arduino Pin that will read the sensor output temperature
+int tempSensorReading;         //The variable we will use to store the sensor reading
+double foodtemperature;        //The variable we will use to store food temperature in degrees. 
+int redPin= 11;                //RGB red
+int greenPin = 10;             //RGB green
+int bluePin = 9;               //RGB blue
+int sensor_value;              // variable to store sensor value
+int redLed= 6;                 //LED red
+int greenLed = 5;              //LED green
+int chk;
+float hum;                     //Stores humidity value
+float ambientTemp;             //Stores Ambient temperature value
+int fanPin = 3;
+unsigned long endTime;         //to exit the running loop after a set milliseconds
+
+//Food Moisture Levels
+int bananaMoistThrld = 600;    //over 600 OK, otherwise hard
+int pizzaMoistThrld = 1000;    //over 1000 OK
+String whatFood = "pizza" ;
+
+void setup()
+{
+  Serial.begin(9600);          // Initalize serial communication
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  pinMode(redLed, OUTPUT);
+  pinMode(greenLed, OUTPUT);
+  pinMode(fanPin, OUTPUT);
+  dht.begin();
+  endTime = millis() + 30000;
+  digitalWrite(greenLed,LOW);
+  digitalWrite(redLed,LOW);
+}
+
+void loop()
+{
+    //analogWrite(fanPin, 200);
+    sensor_value=analogRead(moistureSensePin);//Read sensor data
+    Serial.println(String("Food Moisture:") + sensor_value + String(" % "));
+    //======================================================
+    int FMState = processMoistValue(whatFood, sensor_value);
+    //======================================================
+    hum = dht.readHumidity();
+    ambientTemp= dht.readTemperature();
+    Serial.println(String("Air Humidity: ") + hum + String(" % "));
+    tempSensorReading = analogRead(temperatureSensePin);   //read the analog sensor and store it
+    foodtemperature = (double)tempSensorReading / 1024;    //find percentage of input reading
+    foodtemperature = foodtemperature * 5;                 //multiply by 5V to get voltage
+    foodtemperature = foodtemperature - 0.5;               //Subtract the offset 
+    foodtemperature = foodtemperature * 100;               //Convert to degrees 
+    Serial.println(String("Food temperature: ") + foodtemperature + String(" Celsius"));
+    //====================================================
+    int FTState = processFoodTemperature(foodtemperature);
+    //====================================================
+    Serial.println(String("Ambient Temp: ") +  ambientTemp + String(" Celsius"));
+    //=============================================================================
+    int TDState = processAmbientTemperature(ambientTemp, foodtemperature, FTState);
+    //============================================================================
+    Serial.println(String("Food Temp: ") + foodtemperature + String("  FTState: ") + FTState);
+    Serial.println(String("Food Moisture: ") + sensor_value + String(" FMState: ") + FMState);
+    Serial.println(String("Outside Temp: ") + ambientTemp + String(" TDState: ") + TDState);
+    Serial.println(String("Temp Diff: ") + (foodtemperature -ambientTemp) );
+    //====================================================
+    stateControlFunc(FTState, FMState, TDState, whatFood);
+    //====================================================
+  
+    setLedON(greenLed);
+    setLedOFF(redLed);
+    delay(1000); 
+    setLedOFF(greenLed);
+    setLedON(redLed);
+    delay(1000); 
+    Serial.println("\n\n\n\n\n\n\n\n\n\n");
+
+  if (millis() > endTime) { 
+   exitLoop();
+  }
+}
+void setColor(int redValue, int greenValue, int blueValue) {
+  analogWrite(redPin, redValue);
+  analogWrite(greenPin, greenValue);
+  analogWrite(bluePin, blueValue);
+}
+
+void setLedON(int ledPin){
+   digitalWrite(ledPin,LOW); //Low is ON
+}
+
+void setLedOFF(int ledPin){
+   digitalWrite(ledPin,HIGH); //High is OFF
+}
+
+void exitLoop() {
+    setColor(0, 0, 0);
+    analogWrite(fanPin, 0);
+    //digitalWrite(redLed,HIGH); //high is OFF
+   // digitalWrite(greenLed,HIGH);
+    setLedOFF(redLed);
+    setLedOFF(greenLed);
+    delay(2000); 
+    exit(0);
+}
+
+/* Given the three states of food temperature, fodd moisture and the temperature difference (with environment), this function
+ * writes a statment about the food state to the Serial Monitor  
+ */
+void stateControlFunc(int tFTState, int tFMState, int tTDState, String whatFood) {
+  if(tFMState == FMWet) {
+    displayMessage(String(whatFood + " is below the acceptable moist level. May NOT be suitable to eat"));
+  } else if(tFMState == FMDry) {
+    displayMessage(String(whatFood + " is above the acceptable moist level. May NOT be suitable to eat"));
+  } else if(tFTState == TDLow) {
+    displayMessage(String(whatFood + " is too cold to eat. May need warming up"));
+  } else if(tFTState == FTHot) {
+    displayMessage(String("Wait... " + whatFood + " is too hot to eat, and is being cooled."));
+  } else if(tFTState == FTWarm) {
+    displayMessage(String(whatFood + " is bit too warm to eat, and is being cooled. Be careful!"));
+  } else if(tFTState == FTNormal) {
+    displayMessage(String(whatFood + " is perfectly ready to eat. Enjoy it!"));
+  } 
+}
+
+/*Writes a given message to the Serial Monitor*/
+void displayMessage(String msg) {
+  Serial.println("\n\n===========================================================");
+  Serial.println(msg);
+  Serial.println("===========================================================\n\n");
+  delay(5000); //delay
+}
+
+/*decides which state (4) if the food is in based on the a given food temperature*/ 
+int processFoodTemperature(double tTemp) {
+  int ret = FTNormal;
+  if(tTemp > FTHotThreshold) {
+     ret = FTHot;
+     Serial.println("Food is too hot");
+     setColor(255, 0, 0); // Red Color
+  } else if (tTemp > FTWarmThreshold) {
+     ret = FTWarm;
+     Serial.println("Food is warm");
+     setColor(255, 165, 0); // orange
+  } else if (tTemp > FTNormalThreshold) {
+     ret = FTNormal;
+     Serial.println("Food is ready to eat");
+     setColor(0, 255, 0); // Green Color
+  } else {
+     ret = FTCold;
+     Serial.println("Food is too cold");
+     setColor(0, 0, 255); // blue
+  }
+ return ret;
+}
+
+/*Decides the state of temperature difference (with environment) given the two sensor readings, and sets the Fan to ON/OFF as necessary*/
+int processAmbientTemperature(double tAmbTemp, int tFoodTemp,int tFTState) {
+  int tdStatus = TDNormal;
+  int tempDiff = 10;
+  if(tFoodTemp > tAmbTemp + TDHighThresold) {
+     tdStatus = TDTooHigh;
+     
+     if(tFTState == FTHot || tFTState == FTWarm) {
+       analogWrite(fanPin, 200);
+       Serial.println("Fan is running fast to cool food");
+     }
+  } else if (tFoodTemp > tAmbTemp + TDWarmThresold) {
+    tdStatus = TDHigh;
+    if(tFTState == FTHot || tFTState == FTWarm) {
+      analogWrite(fanPin, 100);
+      Serial.println("Fan is running in medium speed to cool food");
+    }
+  } else if (tFoodTemp > tAmbTemp + TDNormalThresold) {
+    tdStatus = TDNormal;
+     //Serial.println("Food is ready to eat");
+     analogWrite(fanPin, 0);
+  } else {
+    tdStatus = TDLow;
+    analogWrite(fanPin, 0);
+  }
+  return tdStatus;
+}
+
+/*Returns the state of Food Moisture*/
+int processMoistValue(String food, int moist) {
+  int low = lowFoodMoistThresholds(food) ;
+  int high = highFoodMoistThresholds( food);
+  int moistState = procesMoist( moist,  low,  high);
+  return moistState;
+}
+
+/*Decides the Food Moisture state based on low/high food moisture thresholds (food-dependent)*/
+int procesMoist(double moist, int lowThrld, int highThrld) {
+  int ret = FMNormal;
+  if (moist > highThrld) {
+    ret = FMWet;
+  } else if (moist > lowThrld) {
+    ret = FMNormal;
+  } else {
+    ret = FMDry;
+  }
+  return ret;
+}
+
+/*Sets Low moisture threshold (hard-coded)for a given selection of food types)*/
+int lowFoodMoistThresholds(String food) {
+    if(food.equals("banana")) {
+    return 700;
+  } else if (food.equals("pizza")){
+    return 1000;
+  } else {
+    return 1200;
+  }
+}
+
+/*Sets High moisture threshold (hard-coded)for a given selection of food types)*/
+int highFoodMoistThresholds(String food) {
+  if(food.equals("banana")) {
+    return 1000;
+  } else if(food.equals("pizza")) {
+      return 1200;
+  } else {
+    return 1500;
+  }
+}
